@@ -1,5 +1,8 @@
 use std::error::Error;
 use clap::{ArgAction, Parser};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -18,12 +21,45 @@ pub struct Config {
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
 pub fn run(config: Config) -> MyResult<()>{
-    dbg!(config);
+    for filename in config.files {
+        match open(&filename) {
+            Err(e) => eprintln!("Failed to open {}: {}", filename, e),
+            Ok(file) => {
+                let mut line_num = 0;
+                for line_result in file.lines(){
+                    let line = line_result?;
+
+                    if config.number_lines || config.number_nonblank_lines {
+                        if config.number_nonblank_lines {
+                            
+                        }
+                        if line.len() != 0 {
+                            line_num += 1;
+                        }
+                    } else {
+                        println!("{}", line);
+                    }
+                    
+                    if config.number_lines || config.number_nonblank_lines {
+                        println!("{:>6}\t{}", line_num, line);
+                    } else {
+                        println!("{}", line);
+                    }
+                }
+            }
+        }
+    }
     Ok(())
 }
 
 pub fn get_args() -> MyResult<Config> {
     let config = Config::parse();
-    println!("OK");
     Ok(config)
+}
+
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
+    }
 }
