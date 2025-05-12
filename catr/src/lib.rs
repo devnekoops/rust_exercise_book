@@ -11,10 +11,10 @@ pub struct Config {
     files: Vec<String>,
 
     /// flags
-    #[arg(short, long)]
+    #[arg(short, long="number")]
     number_lines: bool,
 
-    #[arg(short='b', long)]
+    #[arg(short='b', long="number-nonblank")]
     number_nonblank_lines: bool,
 }
 
@@ -22,25 +22,24 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 pub fn run(config: Config) -> MyResult<()>{
     for filename in config.files {
+        let mut line_num = 0;
+
         match open(&filename) {
             Err(e) => eprintln!("Failed to open {}: {}", filename, e),
             Ok(file) => {
-                let mut line_num = 0;
+                
                 for line_result in file.lines(){
                     let line = line_result?;
 
-                    if config.number_lines || config.number_nonblank_lines {
-                        if config.number_nonblank_lines {
-                            
-                        }
+                    if config.number_nonblank_lines {
                         if line.len() != 0 {
                             line_num += 1;
+                            println!("{:>6}\t{}", line_num, line);
+                        } else {
+                            println!("");
                         }
-                    } else {
-                        println!("{}", line);
-                    }
-                    
-                    if config.number_lines || config.number_nonblank_lines {
+                    } else if config.number_lines {
+                        line_num += 1;
                         println!("{:>6}\t{}", line_num, line);
                     } else {
                         println!("{}", line);
